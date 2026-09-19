@@ -1,8 +1,8 @@
-import { get, post } from './request'
+import { get, patch, post } from './request'
 import type { LoginResult, UserInfo } from '@/types'
 
 /** 用户注册 */
-export function register(data: { username: string; password: string; email?: string; role?: string }) {
+export function register(data: { username: string; password: string; email?: string }) {
   return post<{ id: number; username: string; role: string }>('/auth/register', data)
 }
 
@@ -23,7 +23,7 @@ export function getMe() {
 
 /** 修改个人信息 */
 export function updateMe(data: { nickname?: string; bio?: string; email?: string }) {
-  return post<unknown>('/users/me', data)
+  return patch<UserInfo>('/users/me', data)
 }
 
 /** 修改头像 */

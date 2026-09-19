@@ -54,6 +54,11 @@ export function leaveCourse(courseId: number) {
   return del<void>(`/courses/${courseId}/members/me`)
 }
 
+/** 课程创建者或管理员移除指定成员 */
+export function removeCourseMember(courseId: number, userId: number) {
+  return del<void>(`/courses/${courseId}/members/${userId}`)
+}
+
 /** 课程成员列表 */
 export function getCourseMembers(courseId: number, params: { page?: number; size?: number; keyword?: string } = {}) {
   return get<PageResult<CourseMember>>(`/courses/${courseId}/members`, params)

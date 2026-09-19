@@ -1,0 +1,5 @@
+target/*
+!target/course-study-platform-backend.jar
+.idea
+*.iml
+*.log

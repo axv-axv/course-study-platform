@@ -1,11 +1,18 @@
-import { del, get, post } from './request'
+import { del, get, request } from './request'
 import type { FileInfo } from '@/types'
 
 /** 上传文件（multipart/form-data） */
 export function uploadFile(file: File, onProgress?: (percent: number) => void) {
   const formData = new FormData()
   formData.append('file', file)
-  return post<FileInfo>('/files', formData)
+  return request<FileInfo>({
+    url: '/files',
+    method: 'POST',
+    data: formData,
+    onUploadProgress: (event) => {
+      if (onProgress && event.total) onProgress(Math.round((event.loaded * 100) / event.total))
+    }
+  })
 }
 
 /** 获取文件信息 */

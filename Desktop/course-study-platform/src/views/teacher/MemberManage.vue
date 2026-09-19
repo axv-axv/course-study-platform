@@ -60,7 +60,7 @@ import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import EmptyState from '@/components/EmptyState.vue'
-import { getCourseDetail, getCourseMembers, leaveCourse } from '@/api/course'
+import { getCourseDetail, getCourseMembers, removeCourseMember } from '@/api/course'
 import type { CourseMember } from '@/types'
 import { formatDateTime, userAvatar } from '@/utils/format'
 
@@ -100,9 +100,7 @@ async function load(p?: number) {
 function removeMember(row: CourseMember) {
   ElMessageBox.confirm(`确定将 ${row.nickname || row.username} 移出课程吗？`, '移除成员', { type: 'warning' })
     .then(async () => {
-      // 后端暂无单独移除成员接口时，此处通过“以成员身份退出”模拟；如后端提供
-      // DELETE /courses/{courseId}/members/{userId}，请替换为对应接口
-      await leaveCourse(courseId.value)
+      await removeCourseMember(courseId.value, row.userId)
       ElMessage.success('成员已移除')
       await load()
     })

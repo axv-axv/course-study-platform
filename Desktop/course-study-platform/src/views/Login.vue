@@ -46,13 +46,6 @@
             <el-input v-model="form.email" placeholder="请输入邮箱" :prefix-icon="Message" clearable />
           </el-form-item>
 
-          <el-form-item v-if="mode === 'register'" label="注册身份" prop="role">
-            <el-radio-group v-model="form.role">
-              <el-radio value="STUDENT">学生</el-radio>
-              <el-radio value="TEACHER">教师</el-radio>
-            </el-radio-group>
-          </el-form-item>
-
           <el-button class="submit-btn btn-gradient" size="large" :loading="loading" @click="submit">
             {{ mode === 'login' ? '登 录' : '注 册' }}
           </el-button>
@@ -94,15 +87,14 @@ const formRef = ref<FormInstance>()
 const form = reactive({
   username: '',
   password: '',
-  email: '',
-  role: 'STUDENT'
+  email: ''
 })
 
 const rules: FormRules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码至少 6 位', trigger: 'blur' }
+    { min: 8, message: '密码至少 8 位', trigger: 'blur' }
   ]
 }
 
@@ -114,30 +106,17 @@ async function submit() {
   loading.value = true
   try {
     if (mode.value === 'register') {
-      await register({ username: form.username, password: form.password, email: form.email, role: form.role })
+      await register({ username: form.username, password: form.password, email: form.email || undefined })
       ElMessage.success('注册成功，请登录')
       mode.value = 'login'
       form.password = ''
     } else {
-      // ========== 前端硬编码账号，不走api请求 ==========
-      const initUser = {
-      username: "lizixuan",
-      password: "5120251815"
-      }
-      if(form.username === initUser.username && form.password === initUser.password){
-        // 手动模拟token，适配你的userStore
-        userStore.setToken("demo-access-001", "demo-refresh-001")
-        // 模拟用户信息
-        userStore.userInfo = {
-          username: "lizixuan",
-          role: "STUDENT"
-        }
-        ElMessage.success('登录成功，欢迎回来')
-        const redirect = (route.query.redirect as string) || '/home'
-        router.push(redirect)
-      }else{
-        ElMessage.error("账号或密码错误")
-      }
+      const result = await login({ username: form.username, password: form.password })
+      userStore.setToken(result.accessToken, result.refreshToken)
+      await userStore.fetchUserInfo()
+      ElMessage.success('登录成功，欢迎回来')
+      const redirect = (route.query.redirect as string) || '/home'
+      router.push(redirect)
     }
 
   } catch {

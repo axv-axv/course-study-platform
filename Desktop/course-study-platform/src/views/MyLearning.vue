@@ -23,7 +23,7 @@
             <el-button text type="primary" @click="$router.push('/courses')">去选课<el-icon><ArrowRight /></el-icon></el-button>
           </div>
 
-          <template v-if="dashboard?.courses.length">
+          <template v-if="dashboard">
             <div v-for="c in dashboard.courses" :key="c.courseId" class="course-progress-item" @click="$router.push(`/course/${c.courseId}`)">
               <img :src="courseCover(c.title, c.coverUrl)" class="cp-cover" alt="" />
               <div class="cp-info">

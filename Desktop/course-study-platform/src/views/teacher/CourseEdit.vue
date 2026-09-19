@@ -182,7 +182,7 @@
         </el-form-item>
 
         <!-- 文件类型：上传 -->
-        <el-form-item v-if="isFileType(resourceForm.resourceType)" label="上传文件" required>
+        <el-form-item v-if="isFileType(resourceForm.resourceType) || resourceForm.resourceType === 'VIDEO'" :label="resourceForm.resourceType === 'VIDEO' ? '上传视频（与外部链接二选一）' : '上传文件'" :required="resourceForm.resourceType !== 'VIDEO'">
           <div class="file-uploader">
             <input ref="fileInput" type="file" class="hidden-input" @change="handleFileChange" />
             <div v-if="resourceForm.fileId" class="file-picked">
@@ -488,7 +488,8 @@ async function saveResource() {
     return
   }
   const needFile = isFileType(resourceForm.resourceType) && !resourceForm.fileId
-  const needLink = (resourceForm.resourceType === 'LINK' || resourceForm.resourceType === 'VIDEO') && !resourceForm.externalUrl
+  const needLink = resourceForm.resourceType === 'LINK' && !resourceForm.externalUrl
+    || resourceForm.resourceType === 'VIDEO' && !resourceForm.externalUrl && !resourceForm.fileId
   if (needFile) {
     ElMessage.warning('请先上传文件')
     return
