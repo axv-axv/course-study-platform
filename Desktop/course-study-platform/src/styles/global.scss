@@ -1,0 +1,164 @@
+// ============ 全局样式 ============
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  font-family: 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  color: $color-text-1;
+  background-color: $color-bg-page;
+  -webkit-font-smoothing: antialiased;
+}
+
+// ---------- 设计令牌（CSS 变量，暗色模式通过 html.dark 覆盖） ----------
+:root {
+  --app-bg: #f5f7fb;
+  --app-card-bg: #ffffff;
+  --app-border: #e2e8f0;
+  --app-text-1: #1e293b;
+  --app-text-2: #475569;
+  --app-text-3: #94a3b8;
+  --app-hover: rgba(79, 107, 255, 0.06);
+}
+
+html.dark {
+  --app-bg: #0f1523;
+  --app-card-bg: #1a2234;
+  --app-border: #2b3648;
+  --app-text-1: #e2e8f0;
+  --app-text-2: #cbd5e1;
+  --app-text-3: #64748b;
+  --app-hover: rgba(79, 107, 255, 0.14);
+
+  body {
+    background-color: var(--app-bg);
+    color: var(--app-text-1);
+  }
+}
+
+// ---------- 通用卡片 ----------
+.app-card {
+  background: var(--app-card-bg, $color-bg-card);
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  transition: $transition-base;
+}
+
+.app-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: $shadow-hover;
+}
+
+// ---------- 渐变按钮 ----------
+.btn-gradient {
+  background: $gradient-primary;
+  border: none;
+  color: #fff;
+  border-radius: 10px;
+  transition: $transition-base;
+  box-shadow: 0 4px 14px rgba(79, 107, 255, 0.28);
+
+  &:hover,
+  &:focus {
+    background: linear-gradient(135deg, #4360f0 0%, #7f51e8 100%);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(79, 107, 255, 0.38);
+  }
+}
+
+// ---------- 页面容器 ----------
+.page-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 8px;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: $color-text-1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: $color-text-3;
+  margin-top: 4px;
+}
+
+// ---------- 文本工具 ----------
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-ellipsis-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// ---------- 滚动条 ----------
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 4px;
+
+  &:hover {
+    background: rgba(148, 163, 184, 0.7);
+  }
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+// ---------- Element Plus 主题微调 ----------
+.el-button--primary {
+  --el-button-bg-color: #4f6bff;
+  --el-button-border-color: #4f6bff;
+  --el-button-hover-bg-color: #5f79ff;
+  --el-button-hover-border-color: #5f79ff;
+  --el-button-active-bg-color: #4360f0;
+  --el-button-active-border-color: #4360f0;
+}
+
+.el-menu {
+  border-right: none !important;
+}
+
+.el-card {
+  border-radius: $radius-lg;
+  border: none;
+}
+
+.el-dialog {
+  border-radius: $radius-xl;
+}
+
+.el-tag {
+  border-radius: 6px;
+}
+
+// ---------- 渐变背景装饰 ----------
+.gradient-text {
+  background: $gradient-primary;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

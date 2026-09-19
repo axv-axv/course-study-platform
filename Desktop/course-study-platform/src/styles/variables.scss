@@ -1,0 +1,51 @@
+// ============ 设计变量（品牌色 / 圆角 / 阴影 / 动效） ============
+
+$color-primary: #4f6bff;          // 品牌主蓝
+$color-primary-light: #8b5cf6;    // 品牌辅助紫
+$color-primary-dark: #3b52d9;
+$gradient-primary: linear-gradient(135deg, #4f6bff 0%, #8b5cf6 100%);
+$gradient-soft: linear-gradient(135deg, rgba(79, 107, 255, 0.10) 0%, rgba(139, 92, 246, 0.10) 100%);
+
+$color-success: #22c55e;
+$color-warning: #f59e0b;
+$color-danger: #ef4444;
+$color-info: #64748b;
+
+$color-text-1: #1e293b;
+$color-text-2: #475569;
+$color-text-3: #94a3b8;
+$color-border: #e2e8f0;
+$color-bg-page: #f5f7fb;
+$color-bg-card: #ffffff;
+
+$radius-sm: 8px;
+$radius-base: 12px;
+$radius-lg: 16px;
+$radius-xl: 24px;
+
+$shadow-card: 0 1px 3px rgba(15, 23, 42, 0.05), 0 4px 16px rgba(15, 23, 42, 0.05);
+$shadow-hover: 0 8px 30px rgba(79, 107, 255, 0.16);
+$shadow-primary: 0 6px 20px rgba(79, 107, 255, 0.35);
+
+$transition-base: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+// 资料类型徽章色
+$type-colors: (
+  'PDF': #ef4444,
+  'DOC': #3b82f6,
+  'PPT': #f97316,
+  'MARKDOWN': #0d9488,
+  'TXT': #64748b,
+  'VIDEO': #8b5cf6,
+  'LINK': #06b6d4,
+  'CODE': #22c55e,
+  'OTHER': #94a3b8
+);
+
+// AI 索引状态色
+$ai-colors: (
+  'NOT_INDEXED': #94a3b8,
+  'PROCESSING': #f59e0b,
+  'INDEXED': #22c55e,
+  'FAILED': #ef4444
+);
