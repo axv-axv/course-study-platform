@@ -72,6 +72,58 @@ public class ResourceRepository {
         return new PageResult<>(items, page, size, total);
     }
 
+    public PageResult<ResourceResponse> findSearchPage(long viewerId, boolean admin, String keyword,
+                                                        Long courseId, Long chapterId, ResourceType type,
+                                                        Long tagId, Long creatorId, String sort,
+                                                        int page, int size) {
+        StringBuilder where = new StringBuilder(" WHERE 1=1");
+        Map<String, Object> params = new HashMap<>();
+        if (!admin) {
+            where.append(" AND c.status = 'ACTIVE' AND (c.visibility = 'PUBLIC' OR c.creator_id = :viewerId OR EXISTS")
+                    .append("(SELECT 1 FROM course_members cm WHERE cm.course_id = c.id AND cm.user_id = :viewerId))");
+            params.put("viewerId", viewerId);
+        }
+        if (keyword != null) {
+            where.append(" AND (LOWER(r.title) LIKE :keyword OR LOWER(COALESCE(r.description, '')) LIKE :keyword OR LOWER(c.title) LIKE :keyword)");
+            params.put("keyword", "%" + keyword.toLowerCase() + "%");
+        }
+        if (courseId != null) { where.append(" AND r.course_id = :courseId"); params.put("courseId", courseId); }
+        if (chapterId != null) { where.append(" AND r.chapter_id = :chapterId"); params.put("chapterId", chapterId); }
+        if (type != null) { where.append(" AND r.resource_type = :type"); params.put("type", type.name()); }
+        if (creatorId != null) { where.append(" AND r.creator_id = :creatorId"); params.put("creatorId", creatorId); }
+        if (tagId != null) {
+            where.append(" AND EXISTS(SELECT 1 FROM resource_tags rt WHERE rt.resource_id = r.id AND rt.tag_id = :tagId)");
+            params.put("tagId", tagId);
+        }
+        String orderBy = switch (sort) {
+            case "popular" -> "r.view_count DESC, r.id DESC";
+            case "downloads" -> "r.download_count DESC, r.id DESC";
+            case "title" -> "LOWER(r.title), r.id";
+            default -> "r.created_at DESC, r.id DESC";
+        };
+        List<ResourceResponse> items = jdbcClient.sql(SELECT + where + " ORDER BY " + orderBy + " LIMIT :limit OFFSET :offset")
+                .params(params).param("limit", size).param("offset", (page - 1) * size)
+                .query(this::map).list().stream().map(this::withTags).toList();
+        long total = jdbcClient.sql("SELECT COUNT(*) FROM resources r JOIN courses c ON c.id = r.course_id" + where)
+                .params(params).query(Long.class).single();
+        return new PageResult<>(items, page, size, total);
+    }
+
+    public PageResult<TagResponse> findTagsPage(String keyword, int page, int size) {
+        String where = keyword == null ? "" : " WHERE LOWER(name) LIKE :keyword";
+        JdbcClient.StatementSpec itemsSpec = jdbcClient.sql("SELECT * FROM tags" + where
+                + " ORDER BY name, id LIMIT :limit OFFSET :offset");
+        JdbcClient.StatementSpec countSpec = jdbcClient.sql("SELECT COUNT(*) FROM tags" + where);
+        if (keyword != null) {
+            String value = "%" + keyword.toLowerCase() + "%";
+            itemsSpec = itemsSpec.param("keyword", value);
+            countSpec = countSpec.param("keyword", value);
+        }
+        List<TagResponse> items = itemsSpec.param("limit", size).param("offset", (page - 1) * size)
+                .query(this::mapTag).list();
+        return new PageResult<>(items, page, size, countSpec.query(Long.class).single());
+    }
+
     public ResourceResponse update(long id, long viewerId, UpdateResourceRequest request,
                                    Long chapterId, Long fileId, String externalUrl) {
         ResourceResponse current = findById(id).orElseThrow();

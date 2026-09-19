@@ -1,6 +1,8 @@
 package com.courseplatform.backend.auth;
 
 import com.courseplatform.backend.user.UserRole;
+import com.courseplatform.backend.user.UserRepository;
+import com.courseplatform.backend.user.UserStatus;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -19,9 +21,11 @@ import java.util.List;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
+    private final UserRepository users;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserRepository users) {
         this.jwtService = jwtService;
+        this.users = users;
     }
 
     @Override
@@ -32,10 +36,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 Claims claims = jwtService.parse(token);
-                UserRole role = UserRole.valueOf(claims.get("role", String.class));
-                AuthenticatedUser principal = new AuthenticatedUser(
-                        Long.parseLong(claims.getSubject()), claims.get("username", String.class), role
-                );
+                long userId = Long.parseLong(claims.getSubject());
+                var currentUser = users.findById(userId)
+                        .filter(user -> user.status() == UserStatus.ACTIVE)
+                        .orElseThrow(() -> new IllegalArgumentException("用户不可用"));
+                UserRole role = currentUser.role();
+                AuthenticatedUser principal = new AuthenticatedUser(userId, currentUser.username(), role);
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         principal, null, List.of(new SimpleGrantedAuthority("ROLE_" + role.name()))
                 );

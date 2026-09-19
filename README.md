@@ -1,6 +1,6 @@
 # 知学：课程资料与智能学习平台
 
-知学是一个面向学生、教师和管理员的课程学习平台。当前版本已经完成基础工程、身份认证、教师审核、课程与章节、文件与学习资料、收藏、学习进度、笔记和个人学习仪表盘。RAG 与 AI Worker 将在基础业务稳定后独立接入。
+知学是一个面向学生、教师和管理员的课程学习平台。当前版本已经完成基础工程、身份认证、教师审核、课程与章节、文件与学习资料、收藏、学习进度、笔记、普通搜索、管理后台和个人学习仪表盘。RAG 与 AI Worker 将在基础业务稳定后独立接入。
 
 ## 已实现功能
 
@@ -12,6 +12,8 @@
 - 学习资料、标签和课程内容筛选
 - 收藏、学习进度、文档页码与视频时间点
 - 个人笔记、最近学习和学习仪表盘
+- 课程、资料、标签统一搜索与多条件资料筛选
+- 管理员用户、角色、状态、课程、资料和平台统计管理
 - PostgreSQL 数据迁移、Redis、健康检查和 Swagger UI
 
 ## 技术栈
@@ -26,10 +28,10 @@
 
 ## 项目目录
 
-仓库中的应用位于 `Desktop/course-study-platform`：
+应用文件直接位于仓库根目录：
 
 ```text
-Desktop/course-study-platform/
+course-study-platform/
 ├── backend/             # Spring Boot 后端
 ├── src/                 # Vue 前端
 ├── docker-compose.yml   # PostgreSQL、Redis、后端
@@ -51,7 +53,7 @@ Desktop/course-study-platform/
 
 ```powershell
 git clone https://github.com/axv-axv/course-study-platform.git
-cd course-study-platform/Desktop/course-study-platform
+cd course-study-platform
 
 Copy-Item .env.example .env
 mvn -f backend/pom.xml -B clean package -DskipTests
@@ -62,7 +64,7 @@ docker compose up -d --build --wait
 
 ```bash
 git clone https://github.com/axv-axv/course-study-platform.git
-cd course-study-platform/Desktop/course-study-platform
+cd course-study-platform
 
 cp .env.example .env
 mvn -f backend/pom.xml -B clean package -DskipTests
@@ -128,7 +130,7 @@ mvn -f backend/pom.xml -B test
 npm run build
 ```
 
-当前后端包含认证、课程、章节、文件、资料、收藏、进度和笔记等模块的自动化测试。
+当前后端包含认证、课程、章节、文件、资料、收藏、进度、笔记、搜索和管理端等模块的自动化测试。
 
 ## 当前开发阶段
 
@@ -137,4 +139,5 @@ npm run build
 - M2：课程、成员与章节
 - M3：文件、资料与标签
 - M4：收藏、进度、笔记与学习仪表盘
-- 后续：搜索与聚合、管理端完善、Python LangChain RAG Worker、DeepSeek 云端模型接入
+- M5：普通搜索与管理员后台
+- 后续：Python LangChain RAG Worker、DeepSeek 云端模型接入

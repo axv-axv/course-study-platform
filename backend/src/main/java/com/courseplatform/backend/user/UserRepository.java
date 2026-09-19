@@ -1,5 +1,6 @@
 package com.courseplatform.backend.user;
 
+import com.courseplatform.backend.common.api.PageResult;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -8,6 +9,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -78,6 +82,36 @@ public class UserRepository {
     public void updateRole(long id, UserRole role) {
         jdbcClient.sql("UPDATE users SET role = :role, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id")
                 .param("role", role.name()).param("id", id).update();
+    }
+
+    public void updateStatus(long id, UserStatus status) {
+        jdbcClient.sql("UPDATE users SET status = :status, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id")
+                .param("status", status.name()).param("id", id).update();
+    }
+
+    public void revokeRefreshSessions(long userId) {
+        jdbcClient.sql("UPDATE refresh_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE user_id = :userId AND revoked_at IS NULL")
+                .param("userId", userId).update();
+    }
+
+    public PageResult<UserResponse> findPage(int page, int size, String keyword, UserRole role) {
+        StringBuilder where = new StringBuilder(" WHERE 1=1");
+        Map<String, Object> params = new HashMap<>();
+        if (keyword != null) {
+            where.append(" AND (LOWER(username) LIKE :keyword OR LOWER(COALESCE(nickname, '')) LIKE :keyword OR LOWER(COALESCE(email, '')) LIKE :keyword)");
+            params.put("keyword", "%" + keyword.toLowerCase() + "%");
+        }
+        if (role != null) {
+            where.append(" AND role = :role");
+            params.put("role", role.name());
+        }
+        List<UserResponse> items = jdbcClient.sql("SELECT * FROM users" + where
+                        + " ORDER BY created_at DESC, id DESC LIMIT :limit OFFSET :offset")
+                .params(params).param("limit", size).param("offset", (page - 1) * size)
+                .query((rs, rowNum) -> UserResponse.from(map(rs, rowNum))).list();
+        long total = jdbcClient.sql("SELECT COUNT(*) FROM users" + where)
+                .params(params).query(Long.class).single();
+        return new PageResult<>(items, page, size, total);
     }
 
     private User map(ResultSet rs, int rowNum) throws SQLException {
