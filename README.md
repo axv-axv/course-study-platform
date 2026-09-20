@@ -1,6 +1,6 @@
 # 知学：课程资料与智能学习平台
 
-知学是一个面向学生、教师和管理员的课程学习平台。当前版本已经完成基础业务平台，以及由独立 Python Worker 执行的 RAG 资料解析、切块和向量建库。DeepSeek 课程问答将在下一阶段接入。
+知学是一个面向学生、教师和管理员的课程学习平台。当前版本已经完成基础业务平台，以及由独立 Python Worker 执行的 RAG 资料解析、向量建库和课程智能问答。
 
 ## 已实现功能
 
@@ -16,6 +16,9 @@
 - 管理员用户、角色、状态、课程、资料和平台统计管理
 - RAG 索引任务、PDF/DOCX/PPTX/Markdown/TXT 文本解析与 LangChain 切块
 - 资料索引状态查询、异步重建和立即删除
+- 课程、章节、单份资料三级范围的 RAG 问答
+- AI 对话创建、历史消息、来源引用和立即删除
+- 无密钥本地测试模式，以及可配置的 DeepSeek 云端回答模式
 - PostgreSQL 数据迁移、Redis、健康检查和 Swagger UI
 
 ## 技术栈
@@ -24,7 +27,7 @@
 | --- | --- |
 | 前端 | Vue 3、TypeScript、Vite、Element Plus、Pinia、Vue Router、Axios |
 | 后端 | Java 21、Spring Boot 3.5、Spring Security、Spring JDBC、JWT、Flyway |
-| AI Worker | Python 3.12、FastAPI、LangChain Text Splitters、Psycopg 3 |
+| AI Worker | Python 3.12、FastAPI、LangChain、LangChain OpenAI、Psycopg 3、DeepSeek API |
 | 数据 | PostgreSQL 17、Redis 7.4 |
 | 文件存储 | 本地 Docker Volume（预留阿里云 OSS 适配） |
 | 测试与部署 | JUnit 5、Mockito、Docker Compose、Actuator、OpenAPI |
@@ -127,6 +130,32 @@ npm run dev
 npm run build
 ```
 
+## AI 问答配置
+
+默认的 `AI_PROVIDER=local` 不需要 API Key，会返回检索到的课程原文和来源，适合本地开发与 Docker 验收。生产环境切换 DeepSeek 时，在 `.env` 中配置：
+
+```dotenv
+AI_PROVIDER=deepseek
+DEEPSEEK_API_KEY=你的密钥
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-flash
+AI_WORKER_INTERNAL_TOKEN=请替换为随机内部密钥
+```
+
+修改环境变量后重新创建后端和 Worker：
+
+```bash
+docker compose up -d --build --force-recreate backend ai-worker
+```
+
+AI 对外接口由 Java 后端统一提供，登录后可以在 Swagger UI 调试：
+
+- `POST /api/v1/ai/conversations`：创建课程对话
+- `GET /api/v1/ai/conversations`：分页查询自己的对话
+- `GET /api/v1/ai/conversations/{id}`：读取消息和引用来源
+- `DELETE /api/v1/ai/conversations/{id}`：立即删除对话及消息
+- `POST /api/v1/ai/chat`：按课程、章节或资料范围提问
+
 ## 测试
 
 ```bash
@@ -135,9 +164,9 @@ npm run build
 cd ai-worker && python -m unittest discover -s tests -v
 ```
 
-当前后端包含认证、课程、章节、文件、资料、收藏、进度、笔记、搜索和管理端等模块的自动化测试。
+当前后端包含认证、课程、章节、文件、资料、收藏、进度、笔记、搜索、管理端和 AI 对话等模块的自动化测试。
 
-AI Worker 使用不依赖云端密钥的确定性开发向量，可完整验证解析、切块、任务队列和索引生命周期。M7 接入 DeepSeek 时只替换问答与生产级 Embedding Provider，不需要修改资料索引 API。
+AI Worker 使用不依赖云端密钥的确定性开发向量，可完整验证解析、切块、任务队列、索引生命周期、范围检索和来源引用。配置 DeepSeek 后由 LangChain OpenAI 兼容客户端生成最终回答，资料索引 API 无需改变。
 
 ## 当前开发阶段
 
@@ -148,4 +177,4 @@ AI Worker 使用不依赖云端密钥的确定性开发向量，可完整验证�
 - M4：收藏、进度、笔记与学习仪表盘
 - M5：普通搜索与管理员后台
 - M6：Python LangChain RAG Worker、资料解析与向量建库
-- 后续：DeepSeek 课程问答、来源引用与对话历史
+- M7：DeepSeek 课程问答、三级范围检索、来源引用与对话历史

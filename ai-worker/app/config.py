@@ -13,6 +13,14 @@ class Settings:
     chunk_size: int
     chunk_overlap: int
     embedding_dimensions: int
+    ai_provider: str
+    ai_top_k: int
+    ai_max_candidates: int
+    worker_internal_token: str
+    deepseek_api_key: str
+    deepseek_base_url: str
+    deepseek_model: str
+    deepseek_timeout_seconds: float
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -32,4 +40,12 @@ class Settings:
             chunk_size=int(os.getenv("RAG_CHUNK_SIZE", "800")),
             chunk_overlap=int(os.getenv("RAG_CHUNK_OVERLAP", "120")),
             embedding_dimensions=int(os.getenv("RAG_EMBEDDING_DIMENSIONS", "384")),
+            ai_provider=os.getenv("AI_PROVIDER", "local").lower(),
+            ai_top_k=int(os.getenv("AI_TOP_K", "5")),
+            ai_max_candidates=int(os.getenv("AI_MAX_CANDIDATES", "500")),
+            worker_internal_token=os.getenv("AI_WORKER_INTERNAL_TOKEN", "local-worker-token-change-me"),
+            deepseek_api_key=os.getenv("DEEPSEEK_API_KEY", ""),
+            deepseek_base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
+            deepseek_model=os.getenv("DEEPSEEK_MODEL", "deepseek-flash"),
+            deepseek_timeout_seconds=float(os.getenv("DEEPSEEK_TIMEOUT_SECONDS", "60")),
         )

@@ -68,3 +68,6 @@ app:
     root: ${STORAGE_ROOT:./data/files}
     api-key: ${STORAGE_API_KEY:local-dev-placeholder}
     max-file-size-bytes: ${MAX_FILE_SIZE_BYTES:209715200}
+  ai:
+    worker-url: ${AI_WORKER_URL:http://localhost:8000}
+    worker-token: ${AI_WORKER_INTERNAL_TOKEN:local-worker-token-change-me}

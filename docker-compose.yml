@@ -54,6 +54,8 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
       STORAGE_ROOT: /app/data/files
       STORAGE_API_KEY: ${STORAGE_API_KEY:-local-dev-placeholder}
+      AI_WORKER_URL: ${AI_WORKER_URL:-http://ai-worker:8000}
+      AI_WORKER_INTERNAL_TOKEN: ${AI_WORKER_INTERNAL_TOKEN:-local-worker-token-change-me}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:
@@ -86,6 +88,14 @@ services:
       RAG_CHUNK_SIZE: ${RAG_CHUNK_SIZE:-800}
       RAG_CHUNK_OVERLAP: ${RAG_CHUNK_OVERLAP:-120}
       RAG_EMBEDDING_DIMENSIONS: ${RAG_EMBEDDING_DIMENSIONS:-384}
+      AI_PROVIDER: ${AI_PROVIDER:-local}
+      AI_TOP_K: ${AI_TOP_K:-5}
+      AI_MAX_CANDIDATES: ${AI_MAX_CANDIDATES:-500}
+      AI_WORKER_INTERNAL_TOKEN: ${AI_WORKER_INTERNAL_TOKEN:-local-worker-token-change-me}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-flash}
+      DEEPSEEK_TIMEOUT_SECONDS: ${DEEPSEEK_TIMEOUT_SECONDS:-60}
     depends_on:
       backend:
         condition: service_healthy

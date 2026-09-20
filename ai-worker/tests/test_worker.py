@@ -3,6 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
+from unittest.mock import MagicMock
 
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -10,6 +11,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from app.embeddings import HashEmbeddings
 from app.extractors import extract_pages
 from app.config import Settings
+from app.chat import RagChatService, Source
 
 
 class WorkerUnitTest(unittest.TestCase):
@@ -50,6 +52,24 @@ class WorkerUnitTest(unittest.TestCase):
             settings.database_url,
             "postgresql://course+user:p%40ss%2Fword@localhost:5432/course+db",
         )
+
+    def test_local_chat_uses_ranked_sources_without_cloud_key(self) -> None:
+        settings = Settings.from_env()
+        service = RagChatService(MagicMock(), settings)
+        source = Source(1, "线性代数", 2, "向量", 3, "向量是有方向的量", "向量是有方向的量", 0.9)
+        with patch.object(service, "search", return_value=[source]):
+            answer, sources = service.answer(11, "什么是向量？")
+
+        self.assertIn("线性代数", answer)
+        self.assertEqual(sources, [source])
+
+    def test_chat_returns_grounded_empty_result(self) -> None:
+        service = RagChatService(MagicMock(), Settings.from_env())
+        with patch.object(service, "search", return_value=[]):
+            answer, sources = service.answer(11, "没有资料的问题")
+
+        self.assertIn("没有已建立索引的资料", answer)
+        self.assertEqual(sources, [])
 
 
 if __name__ == "__main__":
