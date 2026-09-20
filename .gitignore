@@ -24,3 +24,9 @@ data/
 .DS_Store
 Thumbs.db
 *.log
+
+# Python Worker
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/

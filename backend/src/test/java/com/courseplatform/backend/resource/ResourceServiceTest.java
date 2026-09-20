@@ -6,6 +6,7 @@ import com.courseplatform.backend.course.ChapterRepository;
 import com.courseplatform.backend.course.ChapterResponse;
 import com.courseplatform.backend.course.CourseService;
 import com.courseplatform.backend.file.FileService;
+import com.courseplatform.backend.rag.RagIndexRepository;
 import com.courseplatform.backend.user.UserRole;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +22,8 @@ class ResourceServiceTest {
     private final CourseService courses = mock(CourseService.class);
     private final ChapterRepository chapters = mock(ChapterRepository.class);
     private final FileService files = mock(FileService.class);
-    private final ResourceService service = new ResourceService(resources, courses, chapters, files);
+    private final RagIndexRepository indexes = mock(RagIndexRepository.class);
+    private final ResourceService service = new ResourceService(resources, courses, chapters, files, indexes);
     private final AuthenticatedUser teacher = new AuthenticatedUser(7, "teacher", UserRole.TEACHER);
 
     @Test

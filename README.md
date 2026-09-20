@@ -1,6 +1,6 @@
 # 知学：课程资料与智能学习平台
 
-知学是一个面向学生、教师和管理员的课程学习平台。当前版本已经完成基础工程、身份认证、教师审核、课程与章节、文件与学习资料、收藏、学习进度、笔记、普通搜索、管理后台和个人学习仪表盘。RAG 与 AI Worker 将在基础业务稳定后独立接入。
+知学是一个面向学生、教师和管理员的课程学习平台。当前版本已经完成基础业务平台，以及由独立 Python Worker 执行的 RAG 资料解析、切块和向量建库。DeepSeek 课程问答将在下一阶段接入。
 
 ## 已实现功能
 
@@ -14,6 +14,8 @@
 - 个人笔记、最近学习和学习仪表盘
 - 课程、资料、标签统一搜索与多条件资料筛选
 - 管理员用户、角色、状态、课程、资料和平台统计管理
+- RAG 索引任务、PDF/DOCX/PPTX/Markdown/TXT 文本解析与 LangChain 切块
+- 资料索引状态查询、异步重建和立即删除
 - PostgreSQL 数据迁移、Redis、健康检查和 Swagger UI
 
 ## 技术栈
@@ -22,6 +24,7 @@
 | --- | --- |
 | 前端 | Vue 3、TypeScript、Vite、Element Plus、Pinia、Vue Router、Axios |
 | 后端 | Java 21、Spring Boot 3.5、Spring Security、Spring JDBC、JWT、Flyway |
+| AI Worker | Python 3.12、FastAPI、LangChain Text Splitters、Psycopg 3 |
 | 数据 | PostgreSQL 17、Redis 7.4 |
 | 文件存储 | 本地 Docker Volume（预留阿里云 OSS 适配） |
 | 测试与部署 | JUnit 5、Mockito、Docker Compose、Actuator、OpenAPI |
@@ -33,8 +36,9 @@
 ```text
 course-study-platform/
 ├── backend/             # Spring Boot 后端
+├── ai-worker/           # Python LangChain RAG 索引 Worker
 ├── src/                 # Vue 前端
-├── docker-compose.yml   # PostgreSQL、Redis、后端
+├── docker-compose.yml   # PostgreSQL、Redis、后端、AI Worker
 ├── .env.example         # 本地环境变量示例
 └── package.json
 ```
@@ -110,7 +114,7 @@ docker compose down -v
 
 ## 启动前端开发服务器
 
-Docker Compose 当前负责后端、PostgreSQL 和 Redis。前端开发服务器单独启动：
+Docker Compose 当前负责后端、AI Worker、PostgreSQL 和 Redis。前端开发服务器单独启动：
 
 ```bash
 npm install
@@ -128,9 +132,12 @@ npm run build
 ```bash
 mvn -f backend/pom.xml -B test
 npm run build
+cd ai-worker && python -m unittest discover -s tests -v
 ```
 
 当前后端包含认证、课程、章节、文件、资料、收藏、进度、笔记、搜索和管理端等模块的自动化测试。
+
+AI Worker 使用不依赖云端密钥的确定性开发向量，可完整验证解析、切块、任务队列和索引生命周期。M7 接入 DeepSeek 时只替换问答与生产级 Embedding Provider，不需要修改资料索引 API。
 
 ## 当前开发阶段
 
@@ -140,4 +147,5 @@ npm run build
 - M3：文件、资料与标签
 - M4：收藏、进度、笔记与学习仪表盘
 - M5：普通搜索与管理员后台
-- 后续：Python LangChain RAG Worker、DeepSeek 云端模型接入
+- M6：Python LangChain RAG Worker、资料解析与向量建库
+- 后续：DeepSeek 课程问答、来源引用与对话历史

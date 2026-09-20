@@ -7,6 +7,7 @@ import com.courseplatform.backend.course.ChapterRepository;
 import com.courseplatform.backend.course.ChapterResponse;
 import com.courseplatform.backend.course.CourseService;
 import com.courseplatform.backend.file.FileService;
+import com.courseplatform.backend.rag.RagIndexRepository;
 import com.courseplatform.backend.user.UserRole;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ResourceService {
@@ -23,13 +25,15 @@ public class ResourceService {
     private final CourseService courses;
     private final ChapterRepository chapters;
     private final FileService files;
+    private final RagIndexRepository indexes;
 
     public ResourceService(ResourceRepository resources, CourseService courses,
-                           ChapterRepository chapters, FileService files) {
+                           ChapterRepository chapters, FileService files, RagIndexRepository indexes) {
         this.resources = resources;
         this.courses = courses;
         this.chapters = chapters;
         this.files = files;
+        this.indexes = indexes;
     }
 
     @Transactional
@@ -81,7 +85,12 @@ public class ResourceService {
         if (fileId != null && !fileId.equals(current.fileId())) files.requireOwned(fileId, user);
         ResourceType type = request.resourceType() == null ? current.resourceType() : request.resourceType();
         validateSource(type, fileId, externalUrl);
-        return resources.update(id, user.id(), request, chapterId, fileId, externalUrl);
+        ResourceResponse updated = resources.update(id, user.id(), request, chapterId, fileId, externalUrl);
+        if (!Objects.equals(fileId, current.fileId()) || type != current.resourceType()) {
+            indexes.deleteIndex(id);
+            return resources.findById(id).orElseThrow();
+        }
+        return updated;
     }
 
     @Transactional

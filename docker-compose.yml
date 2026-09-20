@@ -71,6 +71,34 @@ services:
     volumes:
       - file_data:/app/data/files
 
+  ai-worker:
+    build:
+      context: ./ai-worker
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-course_platform}
+      DB_USERNAME: ${POSTGRES_USER:-course_platform}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-course_platform_dev}
+      STORAGE_ROOT: /app/data/files
+      RAG_POLL_INTERVAL_SECONDS: ${RAG_POLL_INTERVAL_SECONDS:-1}
+      RAG_STALE_JOB_MINUTES: ${RAG_STALE_JOB_MINUTES:-15}
+      RAG_CHUNK_SIZE: ${RAG_CHUNK_SIZE:-800}
+      RAG_CHUNK_OVERLAP: ${RAG_CHUNK_OVERLAP:-120}
+      RAG_EMBEDDING_DIMENSIONS: ${RAG_EMBEDDING_DIMENSIONS:-384}
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+    volumes:
+      - file_data:/app/data/files:ro
+
 volumes:
   postgres_data:
   redis_data:
