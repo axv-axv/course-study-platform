@@ -15,6 +15,7 @@ import java.io.IOException;
 
 @Service
 public class FileService {
+    private static final long MAX_AVATAR_SIZE = 5L * 1024 * 1024;
     private final FileRepository files;
     private final LocalFileStorage storage;
     private final CourseService courses;
@@ -29,15 +30,26 @@ public class FileService {
     }
 
     public FileInfoResponse upload(AuthenticatedUser user, MultipartFile multipart) {
+        return upload(user, multipart, maxFileSize, false);
+    }
+
+    public FileInfoResponse uploadAvatar(AuthenticatedUser user, MultipartFile multipart) {
+        return upload(user, multipart, MAX_AVATAR_SIZE, true);
+    }
+
+    private FileInfoResponse upload(AuthenticatedUser user, MultipartFile multipart, long sizeLimit, boolean imageOnly) {
         if (multipart.isEmpty()) {
             throw new BusinessException(40030, "上传文件不能为空", HttpStatus.BAD_REQUEST);
         }
-        if (multipart.getSize() > maxFileSize) {
+        if (multipart.getSize() > sizeLimit) {
             throw new BusinessException(41301, "文件超过大小限制", HttpStatus.PAYLOAD_TOO_LARGE);
         }
         String name = safeName(multipart.getOriginalFilename());
         String contentType = multipart.getContentType() == null || multipart.getContentType().isBlank()
                 ? "application/octet-stream" : multipart.getContentType();
+        if (imageOnly && !contentType.toLowerCase().startsWith("image/")) {
+            throw new BusinessException(40032, "头像必须是图片文件", HttpStatus.BAD_REQUEST);
+        }
         try {
             LocalFileStorage.StoredObject object = storage.store(multipart);
             try {
@@ -58,6 +70,24 @@ public class FileService {
 
     public FileContent content(long id, AuthenticatedUser user) {
         StoredFile file = requireAccessible(id, user);
+        Resource resource = storage.load(file.objectKey());
+        if (!resource.exists()) {
+            throw new BusinessException(40431, "文件内容不存在", HttpStatus.NOT_FOUND);
+        }
+        return new FileContent(file, resource);
+    }
+
+    public FileContent downloadContent(long id, AuthenticatedUser user) {
+        FileContent content = content(id, user);
+        files.incrementResourceDownloads(id);
+        return content;
+    }
+
+    public FileContent avatarContent(long id) {
+        StoredFile file = require(id);
+        if (!files.isAvatar(id)) {
+            throw new BusinessException(40432, "头像不存在", HttpStatus.NOT_FOUND);
+        }
         Resource resource = storage.load(file.objectKey());
         if (!resource.exists()) {
             throw new BusinessException(40431, "文件内容不存在", HttpStatus.NOT_FOUND);
@@ -89,7 +119,7 @@ public class FileService {
 
     private StoredFile requireAccessible(long id, AuthenticatedUser user) {
         StoredFile file = require(id);
-        if (file.uploaderId() == user.id() || user.role() == UserRole.ADMIN) return file;
+        if (file.uploaderId() == user.id() || user.role() == UserRole.ADMIN || files.isAvatar(id)) return file;
         for (long courseId : files.findReferencedCourseIds(id)) {
             try {
                 courses.requireViewable(courseId, user);

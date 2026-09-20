@@ -7,12 +7,15 @@ import com.courseplatform.backend.user.UserRole;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.core.io.ByteArrayResource;
 
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class FileServiceTest {
@@ -38,5 +41,28 @@ class FileServiceTest {
 
         assertThatThrownBy(() -> service.delete(5, uploader))
                 .isInstanceOf(BusinessException.class).hasMessage("文件仍被学习资料引用");
+    }
+
+    @Test
+    void rejectsNonImageAvatar(@TempDir Path root) throws Exception {
+        FileService service = new FileService(files, new LocalFileStorage(root.toString()), courses, 100);
+        MockMultipartFile text = new MockMultipartFile("file", "avatar.txt", "text/plain", new byte[]{1});
+
+        assertThatThrownBy(() -> service.uploadAvatar(uploader, text))
+                .isInstanceOf(BusinessException.class).hasMessage("头像必须是图片文件");
+    }
+
+    @Test
+    void downloadIncrementsResourcesUsingTheFile() {
+        LocalFileStorage storage = mock(LocalFileStorage.class);
+        StoredFile stored = new StoredFile(1, "key", "lesson.pdf", "application/pdf", 3, "hash", 7,
+                Instant.parse("2026-09-20T00:00:00Z"));
+        when(files.findById(1)).thenReturn(Optional.of(stored));
+        when(storage.load("key")).thenReturn(new ByteArrayResource(new byte[]{1, 2, 3}));
+        FileService service = new FileService(files, storage, courses, 100);
+
+        service.downloadContent(1, uploader);
+
+        verify(files).incrementResourceDownloads(1);
     }
 }

@@ -65,7 +65,7 @@ public class FileController {
 
     @GetMapping("/{id}/download")
     public ResponseEntity<Resource> download(@PathVariable long id, @AuthenticationPrincipal AuthenticatedUser user) {
-        FileService.FileContent content = service.content(id, user);
+        FileService.FileContent content = service.downloadContent(id, user);
         return ResponseEntity.ok().headers(streamHeaders(content.metadata(), false)).body(content.resource());
     }
 

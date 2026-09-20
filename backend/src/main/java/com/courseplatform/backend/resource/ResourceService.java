@@ -51,7 +51,7 @@ public class ResourceService {
         ResourceResponse resource = require(id);
         courses.requireViewable(resource.courseId(), user);
         resources.incrementView(id);
-        return resource;
+        return resources.findById(id).orElseThrow();
     }
 
     public PageResult<ResourceResponse> courseResources(long courseId, AuthenticatedUser user, int page, int size,

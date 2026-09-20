@@ -46,6 +46,7 @@ public class SecurityConfig {
                                 writeError(response, 403, 40300, "没有权限执行该操作")))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/auth/**", "/api/v1/system/ping").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/public/avatars/**").permitAll()
                         .requestMatchers("/actuator/health/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

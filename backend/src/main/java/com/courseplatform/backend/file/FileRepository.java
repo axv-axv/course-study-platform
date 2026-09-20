@@ -38,8 +38,25 @@ public class FileRepository {
     }
 
     public boolean isReferenced(long fileId) {
-        return jdbcClient.sql("SELECT EXISTS(SELECT 1 FROM resources WHERE file_id = :fileId)")
+        return jdbcClient.sql("""
+                SELECT EXISTS(SELECT 1 FROM resources WHERE file_id = :fileId)
+                    OR EXISTS(SELECT 1 FROM users WHERE avatar_url = '/api/v1/public/avatars/' || CAST(:fileId AS VARCHAR))
+                """)
                 .param("fileId", fileId).query(Boolean.class).single();
+    }
+
+    public boolean isAvatar(long fileId) {
+        return jdbcClient.sql("""
+                SELECT EXISTS(SELECT 1 FROM users
+                              WHERE avatar_url = '/api/v1/public/avatars/' || CAST(:fileId AS VARCHAR))
+                """).param("fileId", fileId).query(Boolean.class).single();
+    }
+
+    public void incrementResourceDownloads(long fileId) {
+        jdbcClient.sql("""
+                UPDATE resources SET download_count = download_count + 1, updated_at = CURRENT_TIMESTAMP
+                WHERE file_id = :fileId
+                """).param("fileId", fileId).update();
     }
 
     public int delete(long id) {

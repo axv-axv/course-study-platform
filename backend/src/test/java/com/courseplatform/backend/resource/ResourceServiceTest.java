@@ -14,7 +14,9 @@ import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ResourceServiceTest {
@@ -52,5 +54,26 @@ class ResourceServiceTest {
         AuthenticatedUser student = new AuthenticatedUser(8, "student", UserRole.STUDENT);
         assertThatThrownBy(() -> service.createTag(student, new CreateTagRequest("Java")))
                 .isInstanceOf(BusinessException.class).hasMessage("仅教师或管理员可以创建标签");
+    }
+
+    @Test
+    void detailReturnsIncrementedViewCount() {
+        ResourceResponse before = resource(4, 2);
+        ResourceResponse after = resource(5, 2);
+        when(resources.findById(21)).thenReturn(Optional.of(before)).thenReturn(Optional.of(after));
+
+        ResourceResponse response = service.detail(21, teacher);
+
+        verify(courses).requireViewable(11, teacher);
+        verify(resources).incrementView(21);
+        assertThat(response.viewCount()).isEqualTo(5);
+    }
+
+    private ResourceResponse resource(long views, long downloads) {
+        Instant now = Instant.parse("2026-09-20T00:00:00Z");
+        return new ResourceResponse(21, 11, null, "资料", null, ResourceType.LINK, null,
+                "https://example.com", 7, views, downloads, AiIndexStatus.NOT_INDEXED, null, null,
+                now, now, new ResourceResponse.NamedRef(11, "课程"), null, null,
+                java.util.List.of(), false, null, new ResourceResponse.Creator(7, "教师"));
     }
 }

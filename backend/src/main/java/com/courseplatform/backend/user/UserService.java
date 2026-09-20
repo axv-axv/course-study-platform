@@ -2,16 +2,38 @@ package com.courseplatform.backend.user;
 
 import com.courseplatform.backend.auth.AuthenticatedUser;
 import com.courseplatform.backend.common.exception.BusinessException;
+import com.courseplatform.backend.file.FileInfoResponse;
+import com.courseplatform.backend.file.FileService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final FileService files;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, FileService files) {
         this.userRepository = userRepository;
+        this.files = files;
+    }
+
+    public AvatarResponse updateAvatar(AuthenticatedUser principal, MultipartFile multipart) {
+        User current = requireActive(principal.id());
+        FileInfoResponse uploaded = files.uploadAvatar(principal, multipart);
+        String avatarUrl = "/api/v1/public/avatars/" + uploaded.fileId();
+        try {
+            User updated = userRepository.updateAvatar(current.id(), current.version(), avatarUrl);
+            deletePreviousAvatar(current.avatarUrl(), principal);
+            return new AvatarResponse(updated.avatarUrl());
+        } catch (RuntimeException exception) {
+            files.delete(uploaded.fileId(), principal);
+            if (exception instanceof IllegalStateException) {
+                throw new BusinessException(40904, exception.getMessage(), HttpStatus.CONFLICT);
+            }
+            throw exception;
+        }
     }
 
     public UserResponse getCurrentUser(AuthenticatedUser principal) {
@@ -49,5 +71,29 @@ public class UserService {
             return null;
         }
         return value.trim();
+    }
+
+    private void deletePreviousAvatar(String avatarUrl, AuthenticatedUser principal) {
+        Long fileId = avatarFileId(avatarUrl);
+        if (fileId == null) return;
+        try {
+            files.delete(fileId, principal);
+        } catch (BusinessException ignored) {
+            // The new avatar is already active; a stale old file must not fail the request.
+        }
+    }
+
+    private Long avatarFileId(String avatarUrl) {
+        if (avatarUrl == null) return null;
+        String prefix = "/api/v1/public/avatars/";
+        if (!avatarUrl.startsWith(prefix)) return null;
+        try {
+            return Long.parseLong(avatarUrl.substring(prefix.length()));
+        } catch (NumberFormatException exception) {
+            return null;
+        }
+    }
+
+    public record AvatarResponse(String avatarUrl) {
     }
 }

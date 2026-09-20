@@ -79,6 +79,17 @@ public class UserRepository {
         return findById(id).orElseThrow();
     }
 
+    public User updateAvatar(long id, long version, String avatarUrl) {
+        int updated = jdbcClient.sql("""
+                UPDATE users SET avatar_url = :avatarUrl, version = version + 1, updated_at = CURRENT_TIMESTAMP
+                WHERE id = :id AND version = :version
+                """).param("avatarUrl", avatarUrl).param("id", id).param("version", version).update();
+        if (updated != 1) {
+            throw new IllegalStateException("用户头像已被其他请求修改");
+        }
+        return findById(id).orElseThrow();
+    }
+
     public void updateRole(long id, UserRole role) {
         jdbcClient.sql("UPDATE users SET role = :role, version = version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id")
                 .param("role", role.name()).param("id", id).update();

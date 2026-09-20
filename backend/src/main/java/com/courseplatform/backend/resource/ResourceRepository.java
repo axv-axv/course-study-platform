@@ -50,6 +50,11 @@ public class ResourceRepository {
                 .query(this::map).optional().map(this::withTags);
     }
 
+    public boolean hasIndexedResources(long courseId) {
+        return jdbcClient.sql("SELECT EXISTS(SELECT 1 FROM resources WHERE course_id = :courseId AND ai_index_status = 'INDEXED')")
+                .param("courseId", courseId).query(Boolean.class).single();
+    }
+
     public PageResult<ResourceResponse> findPage(long courseId, Long chapterId, ResourceType type,
                                                   Long tagId, String keyword, int page, int size) {
         StringBuilder where = new StringBuilder(" WHERE r.course_id = :courseId");

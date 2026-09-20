@@ -22,9 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1")
 public class CourseController {
     private final CourseService service;
+    private final CourseOverviewService overviewService;
 
-    public CourseController(CourseService service) {
+    public CourseController(CourseService service, CourseOverviewService overviewService) {
         this.service = service;
+        this.overviewService = overviewService;
     }
 
     @PostMapping("/courses")
@@ -50,6 +52,12 @@ public class CourseController {
     @GetMapping("/courses/{id}")
     public ApiResponse<CourseResponse> detail(@PathVariable long id, @AuthenticationPrincipal AuthenticatedUser user) {
         return ok(service.detail(id, user));
+    }
+
+    @GetMapping("/courses/{id}/overview")
+    public ApiResponse<CourseOverviewResponse> overview(@PathVariable long id,
+                                                         @AuthenticationPrincipal AuthenticatedUser user) {
+        return ok(overviewService.overview(id, user));
     }
 
     @PatchMapping("/courses/{id}")
