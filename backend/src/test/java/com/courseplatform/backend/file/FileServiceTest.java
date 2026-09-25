@@ -54,7 +54,7 @@ class FileServiceTest {
 
     @Test
     void downloadIncrementsResourcesUsingTheFile() {
-        LocalFileStorage storage = mock(LocalFileStorage.class);
+        FileStorage storage = mock(FileStorage.class);
         StoredFile stored = new StoredFile(1, "key", "lesson.pdf", "application/pdf", 3, "hash", 7,
                 Instant.parse("2026-09-20T00:00:00Z"));
         when(files.findById(1)).thenReturn(Optional.of(stored));

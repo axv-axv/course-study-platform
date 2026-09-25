@@ -65,9 +65,14 @@ app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
   storage:
+    provider: ${STORAGE_PROVIDER:local}
     root: ${STORAGE_ROOT:./data/files}
-    api-key: ${STORAGE_API_KEY:local-dev-placeholder}
     max-file-size-bytes: ${MAX_FILE_SIZE_BYTES:209715200}
+    oss:
+      region: ${OSS_REGION:}
+      bucket: ${OSS_BUCKET:}
+      endpoint: ${OSS_ENDPOINT:}
+      prefix: ${OSS_PREFIX:course-platform}
   ai:
     worker-url: ${AI_WORKER_URL:http://localhost:8000}
     worker-token: ${AI_WORKER_INTERNAL_TOKEN:local-worker-token-change-me}

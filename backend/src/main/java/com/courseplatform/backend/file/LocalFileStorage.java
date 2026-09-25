@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -19,7 +20,8 @@ import java.util.HexFormat;
 import java.util.UUID;
 
 @Component
-public class LocalFileStorage {
+@ConditionalOnProperty(name = "app.storage.provider", havingValue = "local", matchIfMissing = true)
+public class LocalFileStorage implements FileStorage {
     private final Path root;
 
     public LocalFileStorage(@Value("${app.storage.root}") String root) throws IOException {
@@ -27,6 +29,7 @@ public class LocalFileStorage {
         Files.createDirectories(this.root);
     }
 
+    @Override
     public StoredObject store(MultipartFile multipart) throws IOException {
         String uuid = UUID.randomUUID().toString().replace("-", "");
         String objectKey = uuid.substring(0, 2) + "/" + uuid;
@@ -46,10 +49,12 @@ public class LocalFileStorage {
         return new StoredObject(objectKey, HexFormat.of().formatHex(digest.digest()));
     }
 
+    @Override
     public Resource load(String objectKey) {
         return new FileSystemResource(resolve(objectKey));
     }
 
+    @Override
     public void delete(String objectKey) throws IOException {
         Files.deleteIfExists(resolve(objectKey));
     }
@@ -68,6 +73,4 @@ public class LocalFileStorage {
         }
     }
 
-    public record StoredObject(String objectKey, String sha256) {
-    }
 }

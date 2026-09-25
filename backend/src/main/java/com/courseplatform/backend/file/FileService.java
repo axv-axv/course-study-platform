@@ -17,11 +17,11 @@ import java.io.IOException;
 public class FileService {
     private static final long MAX_AVATAR_SIZE = 5L * 1024 * 1024;
     private final FileRepository files;
-    private final LocalFileStorage storage;
+    private final FileStorage storage;
     private final CourseService courses;
     private final long maxFileSize;
 
-    public FileService(FileRepository files, LocalFileStorage storage, CourseService courses,
+    public FileService(FileRepository files, FileStorage storage, CourseService courses,
                        @Value("${app.storage.max-file-size-bytes}") long maxFileSize) {
         this.files = files;
         this.storage = storage;
@@ -51,7 +51,7 @@ public class FileService {
             throw new BusinessException(40032, "头像必须是图片文件", HttpStatus.BAD_REQUEST);
         }
         try {
-            LocalFileStorage.StoredObject object = storage.store(multipart);
+            FileStorage.StoredObject object = storage.store(multipart);
             try {
                 return FileInfoResponse.from(files.create(object.objectKey(), name, contentType,
                         multipart.getSize(), object.sha256(), user.id()));

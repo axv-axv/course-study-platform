@@ -52,8 +52,15 @@ services:
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-ChangeMe123!}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
       STORAGE_ROOT: /app/data/files
-      STORAGE_API_KEY: ${STORAGE_API_KEY:-local-dev-placeholder}
+      OSS_REGION: ${OSS_REGION:-}
+      OSS_BUCKET: ${OSS_BUCKET:-}
+      OSS_ENDPOINT: ${OSS_ENDPOINT:-}
+      OSS_PREFIX: ${OSS_PREFIX:-course-platform}
+      OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:-}
+      OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-}
+      OSS_SESSION_TOKEN: ${OSS_SESSION_TOKEN:-}
       AI_WORKER_URL: ${AI_WORKER_URL:-http://ai-worker:8000}
       AI_WORKER_INTERNAL_TOKEN: ${AI_WORKER_INTERNAL_TOKEN:-local-worker-token-change-me}
     ports:
@@ -82,7 +89,14 @@ services:
       DB_NAME: ${POSTGRES_DB:-course_platform}
       DB_USERNAME: ${POSTGRES_USER:-course_platform}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-course_platform_dev}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
       STORAGE_ROOT: /app/data/files
+      OSS_REGION: ${OSS_REGION:-}
+      OSS_BUCKET: ${OSS_BUCKET:-}
+      OSS_ENDPOINT: ${OSS_ENDPOINT:-}
+      OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:-}
+      OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-}
+      OSS_SESSION_TOKEN: ${OSS_SESSION_TOKEN:-}
       RAG_POLL_INTERVAL_SECONDS: ${RAG_POLL_INTERVAL_SECONDS:-1}
       RAG_STALE_JOB_MINUTES: ${RAG_STALE_JOB_MINUTES:-15}
       RAG_CHUNK_SIZE: ${RAG_CHUNK_SIZE:-800}

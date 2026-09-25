@@ -1,6 +1,8 @@
 import math
+from io import BytesIO
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 from unittest.mock import MagicMock
@@ -12,6 +14,7 @@ from app.embeddings import HashEmbeddings
 from app.extractors import extract_pages
 from app.config import Settings
 from app.chat import RagChatService, Source
+from app.storage import ObjectStorage
 
 
 class WorkerUnitTest(unittest.TestCase):
@@ -52,6 +55,54 @@ class WorkerUnitTest(unittest.TestCase):
             settings.database_url,
             "postgresql://course+user:p%40ss%2Fword@localhost:5432/course+db",
         )
+
+    def test_deepseek_requires_api_key(self) -> None:
+        with patch.dict("os.environ", {"AI_PROVIDER": "deepseek"}, clear=True):
+            with self.assertRaisesRegex(ValueError, "DEEPSEEK_API_KEY"):
+                Settings.from_env()
+
+    def test_oss_requires_complete_credentials(self) -> None:
+        with patch.dict(
+            "os.environ",
+            {"STORAGE_PROVIDER": "oss", "OSS_REGION": "cn-hangzhou"},
+            clear=True,
+        ):
+            with self.assertRaisesRegex(ValueError, "OSS_BUCKET"):
+                Settings.from_env()
+
+    def test_local_storage_materializes_only_files_below_root(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, patch.dict(
+            "os.environ", {"STORAGE_ROOT": directory}, clear=True
+        ):
+            path = Path(directory) / "ab" / "lesson.txt"
+            path.parent.mkdir()
+            path.write_text("课程资料", encoding="utf-8")
+            storage = ObjectStorage(Settings.from_env())
+
+            with storage.materialize("ab/lesson.txt") as materialized:
+                self.assertEqual(materialized.read_text(encoding="utf-8"), "课程资料")
+            with self.assertRaisesRegex(ValueError, "invalid storage object key"):
+                with storage.materialize("../outside.txt"):
+                    pass
+
+    def test_oss_storage_downloads_to_a_disposable_file(self) -> None:
+        environment = {
+            "STORAGE_PROVIDER": "oss",
+            "OSS_REGION": "cn-hangzhou",
+            "OSS_BUCKET": "course-bucket",
+            "OSS_ACCESS_KEY_ID": "test-id",
+            "OSS_ACCESS_KEY_SECRET": "test-secret",
+        }
+        with patch.dict("os.environ", environment, clear=True):
+            storage = ObjectStorage(Settings.from_env())
+        storage._client = MagicMock()
+        storage._client.get_object.return_value = SimpleNamespace(body=BytesIO("云端资料".encode()))
+
+        with storage.materialize("course-platform/ab/file.txt") as path:
+            temporary = path
+            self.assertEqual(path.read_text(encoding="utf-8"), "云端资料")
+
+        self.assertFalse(temporary.exists())
 
     def test_local_chat_uses_ranked_sources_without_cloud_key(self) -> None:
         settings = Settings.from_env()

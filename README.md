@@ -31,7 +31,7 @@
 | 后端 | Java 21、Spring Boot 3.5、Spring Security、Spring JDBC、JWT、Flyway |
 | AI Worker | Python 3.12、FastAPI、LangChain、LangChain OpenAI、Psycopg 3、DeepSeek API |
 | 数据 | PostgreSQL 17、Redis 7.4 |
-| 文件存储 | 本地 Docker Volume（预留阿里云 OSS 适配） |
+| 文件存储 | 本地 Docker Volume / 阿里云 OSS，可通过环境变量切换 |
 | 测试与部署 | JUnit 5、Mockito、Docker Compose、Actuator、OpenAPI |
 
 ## 项目目录
@@ -160,6 +160,27 @@ AI 对外接口由 Java 后端统一提供，登录后可以在 Swagger UI 调�
 
 课程详情页使用 `GET /api/v1/courses/{id}/overview` 一次返回课程、章节、个人进度、最近资料和 AI 可用状态。个人头像通过 `POST /api/v1/users/me/avatar` 上传；只有已经绑定为用户头像的图片可以通过公开头像地址读取，普通课程文件仍需登录并经过课程权限校验。
 
+## 阿里云 OSS 配置
+
+默认的 `STORAGE_PROVIDER=local` 使用 Docker Volume，不需要云端密钥。切换阿里云 OSS 时，在 `.env` 中配置：
+
+```dotenv
+STORAGE_PROVIDER=oss
+OSS_REGION=cn-hangzhou
+OSS_BUCKET=你的 Bucket 名称
+OSS_ENDPOINT=
+OSS_PREFIX=course-platform
+OSS_ACCESS_KEY_ID=你的 AccessKey ID
+OSS_ACCESS_KEY_SECRET=你的 AccessKey Secret
+OSS_SESSION_TOKEN=
+```
+
+`OSS_ENDPOINT` 通常可以留空，由 SDK 根据 Region 选择公共端点；使用内网、加速或自定义域名时再填写。`OSS_SESSION_TOKEN` 只在使用 STS 临时凭证时填写。Java 后端负责上传、下载和删除，Python Worker 会把同一个 OSS 对象临时下载后解析，处理结束立即清理临时文件。
+
+切换到 OSS 只影响后续文件访问方式，不会自动迁移本地 Volume 内已有文件。正式切换前需要把已有对象按数据库中的 `object_key` 原样迁移到 Bucket。密钥只写入本机或服务器的 `.env`，不要提交到 Git。
+
+Worker 的内部健康接口 `/health` 会显示当前 `aiProvider`、`storageProvider` 和 DeepSeek 是否已配置，但不会返回任何密钥；该接口默认只在 Compose 内部网络开放。
+
 ## 测试
 
 ```bash
@@ -183,3 +204,4 @@ AI Worker 使用不依赖云端密钥的确定性开发向量，可完整验证�
 - M6：Python LangChain RAG Worker、资料解析与向量建库
 - M7：DeepSeek 课程问答、三级范围检索、来源引用与对话历史
 - M8：课程主页聚合、头像上传、浏览与下载统计闭环
+- M9：本地/阿里云 OSS 存储切换、DeepSeek/OSS 启动配置校验与运行状态检查

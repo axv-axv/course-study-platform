@@ -69,10 +69,15 @@ app = FastAPI(title="Course Platform RAG Worker", version="0.1.0", lifespan=life
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
+def health() -> dict[str, str | bool]:
     with pool.connection() as connection:
         connection.execute("SELECT 1").fetchone()
-    return {"status": "UP"}
+    return {
+        "status": "UP",
+        "aiProvider": settings.ai_provider,
+        "storageProvider": settings.storage_provider,
+        "deepseekConfigured": bool(settings.deepseek_api_key),
+    }
 
 
 @app.post("/chat", response_model=ChatResponse)

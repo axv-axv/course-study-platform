@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -11,6 +10,7 @@ from psycopg_pool import ConnectionPool
 from .config import Settings
 from .embeddings import HashEmbeddings
 from .extractors import extract_pages
+from .storage import ObjectStorage
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,7 @@ class RagIndexer:
             length_function=len,
         )
         self.embeddings = HashEmbeddings(settings.embedding_dimensions)
+        self.storage = ObjectStorage(settings)
 
     def recover_stale_jobs(self) -> None:
         with self.pool.connection() as connection, connection.transaction():
@@ -86,8 +87,8 @@ class RagIndexer:
             ).fetchone()
         if resource is None:
             raise ValueError("resource is missing, has no file, or indexing was cancelled")
-        path = self._safe_storage_path(resource["object_key"])
-        pages = extract_pages(path, resource["resource_type"])
+        with self.storage.materialize(resource["object_key"]) as path:
+            pages = extract_pages(path, resource["resource_type"])
         documents = [
             Document(page_content=page.text, metadata={"page": page.page})
             for page in pages
@@ -168,11 +169,3 @@ class RagIndexer:
                     """,
                     (message, job["resource_id"]),
                 )
-
-    def _safe_storage_path(self, object_key: str) -> Path:
-        path = (self.settings.storage_root / object_key).resolve()
-        if not path.is_relative_to(self.settings.storage_root):
-            raise ValueError("invalid storage object key")
-        if not path.is_file():
-            raise FileNotFoundError(f"stored file not found: {object_key}")
-        return path
